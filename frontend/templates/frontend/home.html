@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NextTrack</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+    .main-card {
+      background: #222;
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 700px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    }
+    .result-card {
+      transition: transform 0.2s;
+    }
+    .result-card:hover {
+      transform: translateY(-5px);
+    }
+    .fade-in {
+      animation: fadeIn 0.6s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #loadingOverlay {
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1050;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    #loadingOverlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-card">
+    <h1 class="mb-4 text-center"><i class="fa-solid fa-music"></i> NextTrack</h1>
+    <form id="recommendForm" class="mb-4">
+      <div class="row g-3">
+        <div class="col-md-12">
+          <input type="text" class="form-control" id="trackInput" placeholder="🎵 Enter a recent track..." required>
+        </div>
+        <div class="col-md-6">
+          <input type="text" class="form-control" id="artistInput" placeholder="👤 Artist (optional)">
+        </div>
+        <div class="col-md-3">
+          <input type="text" class="form-control" id="moodInput" placeholder="😊 Mood">
+        </div>
+        <div class="col-md-3">
+          <input type="text" class="form-control" id="genreInput" placeholder="🎶 Genre">
+        </div>
+      </div>
+      <div class="text-center mt-3">
+        <button type="submit" class="btn btn-primary px-4">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Get Recommendations
+        </button>
+      </div>
+    </form>
+
+    <h3 class="mb-3">Results</h3>
+    <div id="results"></div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100">
+    <div class="spinner-border text-light" role="status" style="width: 4rem; height: 4rem;">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const overlay = document.getElementById("loadingOverlay");
+
+    document.getElementById("recommendForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      overlay.classList.add("show"); // fade in spinner
+
+      const track = document.getElementById("trackInput").value;
+      const artist = document.getElementById("artistInput").value;
+      const mood = document.getElementById("moodInput").value;
+      const genre = document.getElementById("genreInput").value;
+
+      try {
+        const response = await fetch("/api/recommend/top/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recent_tracks: [track],
+            preferences: { 
+              artist: artist,
+              mood: mood,
+              genre: genre,
+              randomize: true,
+              seed: Date.now().toString()
+            }
+          })
+        });
+
+        const data = await response.json();
+        const resultsDiv = document.getElementById("results");
+        resultsDiv.innerHTML = "";
+
+        if (data.recommended_tracks && data.recommended_tracks.length > 0) {
+          let indicators = "";
+          let slides = "";
+
+          data.recommended_tracks.forEach((t, index) => {
+            indicators += `
+              <button type="button" data-bs-target="#resultsCarousel" data-bs-slide-to="${index}" 
+                ${index === 0 ? 'class="active" aria-current="true"' : ""} aria-label="Slide ${index+1}">
+              </button>`;
+
+            slides += `
+              <div class="carousel-item ${index === 0 ? "active" : ""} fade-in">
+                <div class="d-flex justify-content-center">
+                  <div class="card result-card shadow-sm border-0 rounded-3 overflow-hidden" style="width: 22rem;">
+                    <img src="${t.cover_art || 'https://via.placeholder.com/300x300.png?text=No+Cover'}" 
+                         class="card-img-top" 
+                         alt="Cover Art"
+                         style="object-fit: cover; height: 250px;">
+                    <div class="card-body bg-light text-dark">
+                      <h5 class="card-title"><i class="fa-solid fa-compact-disc"></i> ${t.title}</h5>
+                      <p class="mb-1"><i class="fa-solid fa-user"></i> <strong>Artist:</strong> ${t.artist}</p>
+                      <p class="mb-1"><i class="fa-solid fa-face-smile"></i> <strong>Mood:</strong> ${t.mood.charAt(0).toUpperCase() + t.mood.slice(1)}</p>
+                      <p class="mb-0"><i class="fa-solid fa-music"></i> <strong>Genre:</strong> ${t.genre_hint}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+          });
+
+          resultsDiv.innerHTML = `
+            <div id="resultsCarousel" class="carousel slide" data-bs-ride="carousel">
+              <div class="carousel-indicators">
+                ${indicators}
+              </div>
+              <div class="carousel-inner">
+                ${slides}
+              </div>
+              <button class="carousel-control-prev" type="button" data-bs-target="#resultsCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+              </button>
+              <button class="carousel-control-next" type="button" data-bs-target="#resultsCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+              </button>
+            </div>`;
+        } else {
+          resultsDiv.innerHTML = `<p class="text-warning">⚠️ No recommendations found.</p>`;
+        }
+      } catch (err) {
+        alert("Error fetching recommendations. Please try again.");
+      } finally {
+        setTimeout(() => overlay.classList.remove("show"), 200); // fade out spinner
+      }
+    });
+  </script>
+</body>
+</html>
