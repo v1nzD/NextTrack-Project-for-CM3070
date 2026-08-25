@@ -84,7 +84,7 @@ NextTrack follows an API-first architecture:
           └─────────────────┘   └─────────────────┘
 
 
-🧠 Recommendation Algorithm
+## 🧠 Recommendation Algorithm
 
 NextTrack uses a hybrid heuristic recommendation approach rather than a traditional collaborative-filtering model.
 
@@ -127,7 +127,7 @@ This creates a more varied recommendation list rather than simply returning the 
 
 The final ranked recommendations are returned through the REST API and displayed by the frontend.
 
-🔌 External APIs
+## 🔌 External APIs
 
 NextTrack integrates with external music databases to enrich recommendation results.
 
@@ -141,7 +141,7 @@ Used to retrieve album artwork where available.
 
 External API failures are handled so that unavailable artwork or metadata does not prevent the recommendation system from functioning.
 
-🛠️ Tech Stack
+## 🛠️ Tech Stack
 Technology	Purpose
 Python	Core application logic
 Django	Web framework
@@ -154,7 +154,7 @@ MusicBrainz API	Music metadata
 Cover Art Archive	Album artwork
 pytest	Automated testing
 
-🚀 Getting Started
+## 🚀 Getting Started
 Prerequisites
 
 Make sure you have:
@@ -183,7 +183,7 @@ python manage.py runserver
 The application will then be available at:
 
 http://127.0.0.1:8000/
-🧪 Running Tests
+## 🧪 Running Tests
 
 Run the test suite with:
 
@@ -195,7 +195,7 @@ pytest -v
 
 The test suite covers the core API and recommendation functionality.
 
-🔌 API
+## 🔌 API
 
 NextTrack exposes its recommendation functionality through a REST API.
 
@@ -223,7 +223,7 @@ Example response:
 
 Note: Replace the example endpoint and request/response fields above with the exact API contract implemented in the project.
 
-🔐 Privacy
+## 🔐 Privacy
 
 Privacy is one of the core design considerations behind NextTrack.
 
